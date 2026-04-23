@@ -1,6 +1,9 @@
+import { loadEnvConfig } from "@next/env";
 import fs from "node:fs";
 import path from "node:path";
 import { createAdminSupabase } from "../lib/supabase/admin";
+
+loadEnvConfig(process.cwd());
 
 type ResourceSeed = {
   slug: string;
@@ -25,12 +28,10 @@ async function main() {
     is_active: true,
   }));
 
-  const { error } = await admin
-    .from("protected_resources")
-    .upsert(payload, {
-      onConflict: "slug",
-      ignoreDuplicates: false,
-    });
+  const { error } = await admin.from("protected_resources").upsert(payload, {
+    onConflict: "slug",
+    ignoreDuplicates: false,
+  });
 
   if (error) {
     throw error;

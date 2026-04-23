@@ -1,6 +1,9 @@
+import { loadEnvConfig } from "@next/env";
 import fs from "node:fs";
 import path from "node:path";
 import { createAdminSupabase } from "../lib/supabase/admin";
+
+loadEnvConfig(process.cwd());
 
 async function main() {
   const slug = process.argv[2];
@@ -25,12 +28,10 @@ async function main() {
 
   const admin = createAdminSupabase();
 
-  const { error: uploadError } = await admin.storage
-    .from(bucket)
-    .upload(storagePath, fileBuffer, {
-      contentType: mimeType,
-      upsert: false,
-    });
+  const { error: uploadError } = await admin.storage.from(bucket).upload(storagePath, fileBuffer, {
+    contentType: mimeType,
+    upsert: false,
+  });
 
   if (uploadError) {
     throw uploadError;

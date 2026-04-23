@@ -1,8 +1,11 @@
+import { loadEnvConfig } from "@next/env";
 import fs from "node:fs";
 import path from "node:path";
 import XLSX from "xlsx";
 import { createAdminSupabase } from "../lib/supabase/admin";
 import { normalizeUid } from "../lib/uid";
+
+loadEnvConfig(process.cwd());
 
 type RawRow = {
   UID?: string;
@@ -78,12 +81,10 @@ async function main() {
 
   const admin = createAdminSupabase();
 
-  const { error: upsertError } = await admin
-    .from("employee_allowlist")
-    .upsert(normalizedRows, {
-      onConflict: "uid",
-      ignoreDuplicates: false,
-    });
+  const { error: upsertError } = await admin.from("employee_allowlist").upsert(normalizedRows, {
+    onConflict: "uid",
+    ignoreDuplicates: false,
+  });
 
   if (upsertError) {
     throw upsertError;
