@@ -1,90 +1,71 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { getBrowserSupabase } from "@/lib/supabase/browser";
 
-export function ResetPasswordForm({ error: initialError }: { error?: string }) {
-  const router = useRouter();
-  const supabase = getBrowserSupabase();
-
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+export function ForgotPasswordForm() {
+  const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(initialError || "");
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
-    setError("");
     setMessage("");
+    setError("");
 
-    if (password !== confirmPassword) {
-      setError("Пароли не совпадают.");
-      setBusy(false);
-      return;
-    }
+    const supabase = getBrowserSupabase();
 
-    const { error } = await supabase.auth.updateUser({ password });
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+    });
 
     if (error) {
-      setError("Не удалось обновить пароль. Откройте письмо заново и повторите попытку.");
+      setError("Не удалось отправить письмо для сброса пароля.");
       setBusy(false);
       return;
     }
 
-    setMessage("Пароль обновлен.");
-    router.push("/login?reset=1");
-    router.refresh();
+    setMessage("Письмо для сброса пароля отправлено.");
+    setBusy(false);
   }
 
   return (
     <div className="auth-card">
       <div className="brand-chip">
         <span className="brand-dot" />
-        АртРест Бонус
+        Арт Рест Бонус
       </div>
 
-      <h1>Новый пароль</h1>
-      <p>Введите новый пароль для своей учетной записи.</p>
+      <h1>Сброс пароля</h1>
+      <p>Введите email, на который зарегистрирован аккаунт.</p>
 
       {message ? <div className="status-box status-box--success">{message}</div> : null}
       {error ? <div className="status-box status-box--error">{error}</div> : null}
 
       <form className="form-grid" onSubmit={onSubmit}>
         <div className="field">
-          <label htmlFor="new-password">Новый пароль</label>
+          <label htmlFor="forgot-email">Email</label>
           <input
-            id="new-password"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            autoComplete="new-password"
-            required
-          />
-        </div>
-
-        <div className="field">
-          <label htmlFor="repeat-password">Повторите пароль</label>
-          <input
-            id="repeat-password"
-            type="password"
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            autoComplete="new-password"
+            id="forgot-email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
             required
           />
         </div>
 
         <button className="primary-button" type="submit" disabled={busy}>
-          {busy ? "Сохраняем..." : "Сохранить пароль"}
+          {busy ? "Отправляем..." : "Отправить письмо"}
         </button>
       </form>
 
       <div className="auth-links">
-        <Link href="/login">Вернуться на вход</Link>
+        <Link href="/login" prefetch={false}>
+          Вернуться на вход
+        </Link>
       </div>
     </div>
   );

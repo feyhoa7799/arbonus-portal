@@ -70,11 +70,7 @@ function TurnstileWidget({
   }, [loaded, onTokenChange]);
 
   if (!TURNSTILE_SITE_KEY) {
-    return (
-      <div className="status-box status-box--error">
-        Не задан `NEXT_PUBLIC_TURNSTILE_SITE_KEY`.
-      </div>
-    );
+    return <div className="status-box status-box--error">Не задан NEXT_PUBLIC_TURNSTILE_SITE_KEY.</div>;
   }
 
   return <div id="turnstile-widget" />;
@@ -82,7 +78,6 @@ function TurnstileWidget({
 
 export function RegisterForm() {
   const router = useRouter();
-  const supabase = getBrowserSupabase();
 
   const [uid, setUid] = useState("");
   const [email, setEmail] = useState("");
@@ -118,6 +113,8 @@ export function RegisterForm() {
       return;
     }
 
+    const supabase = getBrowserSupabase();
+
     const { error } = await supabase.auth.signUp({
       email: email.trim().toLowerCase(),
       password,
@@ -144,18 +141,14 @@ export function RegisterForm() {
     <div className="auth-card">
       <div className="brand-chip">
         <span className="brand-dot" />
-        АртРест Бонус
+        Арт Рест Бонус
       </div>
 
       <h1>Регистрация</h1>
-      <p>
-        Зарегистрироваться может только сотрудник, чей логин есть в белом списке.
-      </p>
+      <p>Зарегистрироваться может только сотрудник, чей логин есть в белом списке.</p>
 
       {error ? <div className="status-box status-box--error">{error}</div> : null}
-      {successMessage ? (
-        <div className="status-box status-box--success">{successMessage}</div>
-      ) : null}
+      {successMessage ? <div className="status-box status-box--success">{successMessage}</div> : null}
 
       <form className="form-grid" onSubmit={onSubmit}>
         <div className="field">
@@ -209,7 +202,9 @@ export function RegisterForm() {
       </form>
 
       <div className="auth-links">
-        <Link href="/login">Уже есть аккаунт? Войти</Link>
+        <Link href="/login" prefetch={false}>
+          Уже есть аккаунт? Войти
+        </Link>
       </div>
     </div>
   );

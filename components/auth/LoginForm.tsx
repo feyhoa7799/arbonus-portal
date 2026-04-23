@@ -13,7 +13,6 @@ type Props = {
 
 export function LoginForm({ blocked, confirmed, reset }: Props) {
   const router = useRouter();
-  const supabase = getBrowserSupabase();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,6 +23,8 @@ export function LoginForm({ blocked, confirmed, reset }: Props) {
     event.preventDefault();
     setBusy(true);
     setError("");
+
+    const supabase = getBrowserSupabase();
 
     const { error } = await supabase.auth.signInWithPassword({
       email: email.trim().toLowerCase(),
@@ -44,17 +45,15 @@ export function LoginForm({ blocked, confirmed, reset }: Props) {
     <div className="auth-card">
       <div className="brand-chip">
         <span className="brand-dot" />
-        АртРест Бонус
+        Арт Рест Бонус
       </div>
 
       <h1>Вход в портал</h1>
-      <p>
-        Войдите по email и паролю. Доступ открыт только сотрудникам из белого списка.
-      </p>
+      <p>Войдите по email и паролю. Доступ открыт только сотрудникам.</p>
 
       {blocked ? (
         <div className="status-box status-box--error">
-          Доступ отключен. Логин не найден в текущем белом списке или учетная запись заблокирована.
+          Доступ отключен. Логин не найден в текущем белом списке или учетная запись заблокирована, обратитесь к директору или HR.
         </div>
       ) : null}
 
@@ -105,8 +104,12 @@ export function LoginForm({ blocked, confirmed, reset }: Props) {
       </form>
 
       <div className="auth-links">
-        <Link href="/register">Нет аккаунта? Зарегистрироваться</Link>
-        <Link href="/forgot-password">Забыли пароль?</Link>
+        <Link href="/register" prefetch={false}>
+          Нет аккаунта? Зарегистрироваться
+        </Link>
+        <Link href="/forgot-password" prefetch={false}>
+          Забыли пароль?
+        </Link>
       </div>
     </div>
   );

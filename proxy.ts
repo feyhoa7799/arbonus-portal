@@ -10,14 +10,22 @@ const PUBLIC_ROUTES = [
   "/auth/callback",
 ];
 
-const REDIRECT_IF_AUTHENTICATED = [
-  "/login",
-  "/register",
-  "/confirm-email",
-  "/forgot-password",
-];
+const PUBLIC_API_ROUTES = ["/api/auth/register/precheck", "/api/health"];
 
-const PUBLIC_API_ROUTES = ["/api/auth/register/precheck"];
+type CookieToSet = {
+  name: string;
+  value: string;
+  options?: {
+    domain?: string;
+    expires?: Date | number;
+    httpOnly?: boolean;
+    maxAge?: number;
+    path?: string;
+    sameSite?: boolean | "lax" | "strict" | "none";
+    secure?: boolean;
+    priority?: "low" | "medium" | "high";
+  };
+};
 
 function isPublicRoute(pathname: string) {
   return (
@@ -30,51 +38,69 @@ function isPublicRoute(pathname: string) {
 }
 
 export async function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const publicRoute = isPublicRoute(pathname);
+
+  if (publicRoute) {
+    return NextResponse.next({ request });
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = "/login";
+    loginUrl.searchParams.set("next", pathname);
+    loginUrl.searchParams.set("config", "missing");
+    return NextResponse.redirect(loginUrl);
+  }
+
   let response = NextResponse.next({
     request,
   });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
+  try {
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
       cookies: {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        setAll(cookiesToSet: CookieToSet[]) {
+          cookiesToSet.forEach((cookie) => {
+            request.cookies.set(cookie.name, cookie.value);
+          });
+
           response = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options),
-          );
+
+          cookiesToSet.forEach((cookie) => {
+            response.cookies.set(cookie.name, cookie.value, cookie.options);
+          });
         },
       },
-    },
-  );
+    });
 
-  const pathname = request.nextUrl.pathname;
-  const publicRoute = isPublicRoute(pathname);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    if (!user) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/login";
+      loginUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
 
-  if (!user && !publicRoute) {
+    return response;
+  } catch (error) {
+    console.error("Proxy auth check failed:", error);
+
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     loginUrl.searchParams.set("next", pathname);
+    loginUrl.searchParams.set("network", "1");
     return NextResponse.redirect(loginUrl);
   }
-
-  if (user && REDIRECT_IF_AUTHENTICATED.includes(pathname)) {
-    const portalUrl = request.nextUrl.clone();
-    portalUrl.pathname = "/portal";
-    portalUrl.search = "";
-    return NextResponse.redirect(portalUrl);
-  }
-
-  return response;
 }
 
 export const config = {

@@ -5,7 +5,6 @@ import { FormEvent, useState } from "react";
 import { getBrowserSupabase } from "@/lib/supabase/browser";
 
 export function ConfirmEmailCard({ email }: { email: string }) {
-  const supabase = getBrowserSupabase();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -15,6 +14,8 @@ export function ConfirmEmailCard({ email }: { email: string }) {
     setBusy(true);
     setMessage("");
     setError("");
+
+    const supabase = getBrowserSupabase();
 
     const { error } = await supabase.auth.resend({
       type: "signup",
@@ -38,7 +39,7 @@ export function ConfirmEmailCard({ email }: { email: string }) {
     <div className="auth-card">
       <div className="brand-chip">
         <span className="brand-dot" />
-        АртРест Бонус
+        Арт Рест Бонус
       </div>
 
       <h1>Подтвердите почту</h1>
@@ -59,7 +60,9 @@ export function ConfirmEmailCard({ email }: { email: string }) {
       ) : null}
 
       <div className="auth-links">
-        <Link href="/login">Вернуться ко входу</Link>
+        <Link href="/login" prefetch={false}>
+          Вернуться ко входу
+        </Link>
       </div>
     </div>
   );
