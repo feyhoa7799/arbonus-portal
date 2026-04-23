@@ -12,6 +12,12 @@ const PUBLIC_ROUTES = [
 
 const PUBLIC_API_ROUTES = ["/api/auth/register/precheck", "/api/health"];
 
+const PUBLIC_PREFIXES = [
+  "/_next",
+  "/favicon",
+  "/portal-assets",
+];
+
 type CookieToSet = {
   name: string;
   value: string;
@@ -31,17 +37,15 @@ function isPublicRoute(pathname: string) {
   return (
     PUBLIC_ROUTES.some((route) => pathname === route) ||
     PUBLIC_API_ROUTES.some((route) => pathname === route) ||
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon") ||
+    PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
     pathname === "/robots.txt"
   );
 }
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const publicRoute = isPublicRoute(pathname);
 
-  if (publicRoute) {
+  if (isPublicRoute(pathname)) {
     return NextResponse.next({ request });
   }
 
@@ -56,9 +60,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  let response = NextResponse.next({
-    request,
-  });
+  let response = NextResponse.next({ request });
 
   try {
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -104,5 +106,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|portal-assets).*)"],
 };
