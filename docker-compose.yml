@@ -1,0 +1,11 @@
+services:
+  arbonus-app:
+    build: .
+    container_name: arbonus-app
+    restart: unless-stopped
+    ports:
+      - "8080:443"
+    env_file:
+      - .env.production
+    volumes:
+      - /opt/arbonus/import:/data/import:rw
