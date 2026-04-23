@@ -11,7 +11,7 @@ services:
     container_name: arbonus-app
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8081:3000"
+      - "8081:3000"
     env_file:
       - /opt/arbonus/.env.production
     healthcheck:
