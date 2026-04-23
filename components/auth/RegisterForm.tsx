@@ -14,6 +14,7 @@ declare global {
           sitekey: string;
           callback: (token: string) => void;
           "expired-callback"?: () => void;
+          "error-callback"?: () => void;
         },
       ) => void;
       reset: (element?: HTMLElement) => void;
@@ -25,8 +26,10 @@ const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
 
 function TurnstileWidget({
   onTokenChange,
+  onLoadError,
 }: {
   onTokenChange: (value: string) => void;
+  onLoadError: () => void;
 }) {
   const [loaded, setLoaded] = useState(false);
 
@@ -47,8 +50,9 @@ function TurnstileWidget({
     script.async = true;
     script.defer = true;
     script.onload = () => setLoaded(true);
+    script.onerror = () => onLoadError();
     document.head.appendChild(script);
-  }, [loaded]);
+  }, [loaded, onLoadError]);
 
   useEffect(() => {
     if (!loaded || typeof window === "undefined" || !window.turnstile) {
@@ -66,11 +70,19 @@ function TurnstileWidget({
       sitekey: TURNSTILE_SITE_KEY,
       callback: (token) => onTokenChange(token),
       "expired-callback": () => onTokenChange(""),
+      "error-callback": () => {
+        onTokenChange("");
+        onLoadError();
+      },
     });
-  }, [loaded, onTokenChange]);
+  }, [loaded, onTokenChange, onLoadError]);
 
   if (!TURNSTILE_SITE_KEY) {
-    return <div className="status-box status-box--error">Не задан NEXT_PUBLIC_TURNSTILE_SITE_KEY.</div>;
+    return (
+      <div className="status-box status-box--error">
+        Не задан NEXT_PUBLIC_TURNSTILE_SITE_KEY.
+      </div>
+    );
   }
 
   return <div id="turnstile-widget" />;
@@ -86,12 +98,19 @@ export function RegisterForm() {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [turnstileLoadFailed, setTurnstileLoadFailed] = useState(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     setError("");
     setSuccessMessage("");
+
+    if (!turnstileToken) {
+      setError("Капча не прошла проверку. Обновите страницу и попробуйте снова.");
+      setBusy(false);
+      return;
+    }
 
     const precheckResponse = await fetch("/api/auth/register/precheck", {
       method: "POST",
@@ -150,6 +169,12 @@ export function RegisterForm() {
       {error ? <div className="status-box status-box--error">{error}</div> : null}
       {successMessage ? <div className="status-box status-box--success">{successMessage}</div> : null}
 
+      {turnstileLoadFailed ? (
+        <div className="status-box status-box--error">
+          Не удалось загрузить капчу Cloudflare Turnstile. Проверьте интернет, ключи и попробуйте обновить страницу.
+        </div>
+      ) : null}
+
       <form className="form-grid" onSubmit={onSubmit}>
         <div className="field">
           <label htmlFor="uid">Имя пользователя</label>
@@ -193,10 +218,13 @@ export function RegisterForm() {
 
         <div className="field">
           <label>Проверка безопасности</label>
-          <TurnstileWidget onTokenChange={setTurnstileToken} />
+          <TurnstileWidget
+            onTokenChange={setTurnstileToken}
+            onLoadError={() => setTurnstileLoadFailed(true)}
+          />
         </div>
 
-        <button className="primary-button" type="submit" disabled={busy || !turnstileToken}>
+        <button className="primary-button" type="submit" disabled={busy}>
           {busy ? "Создаем аккаунт..." : "Зарегистрироваться"}
         </button>
       </form>
