@@ -33,7 +33,7 @@ export async function getServerSupabase() {
               cookieStore.set(cookie.name, cookie.value, cookie.options);
             });
           } catch {
-            // In Server Components the cookie store can be read-only.
+            // Read-only in some server contexts.
           }
         },
       },
