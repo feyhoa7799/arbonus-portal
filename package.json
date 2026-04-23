@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "import:allowlist": "tsx scripts/import-allowlist.ts",
+    "import:allowlist:prod": "dotenv -e .env.prod-sync -- tsx scripts/import-allowlist.ts ./import/allowlist.xlsx",
     "seed:resources": "tsx scripts/seed-resources.ts",
     "upload:resource": "tsx scripts/upload-resource-file.ts"
   },
@@ -27,6 +28,7 @@
     "@types/node": "^22.15.21",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
+    "dotenv-cli": "^11.0.0",
     "typescript": "^5.9.3"
   }
 }
