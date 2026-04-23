@@ -13,83 +13,99 @@ type AccessResult = {
 };
 
 export async function ensurePortalAccountFromUser(user: User): Promise<AccessResult> {
-  const uid = normalizeUid(String(user.user_metadata?.uid ?? ""));
-  if (!uid) {
+  try {
+    const uid = normalizeUid(String(user.user_metadata?.uid ?? ""));
+    if (!uid) {
+      return { ok: false };
+    }
+
+    const admin = createAdminSupabase();
+
+    const { data: allowlist, error: allowlistError } = await admin
+      .from("employee_allowlist")
+      .select("*")
+      .eq("uid", uid)
+      .maybeSingle();
+
+    if (allowlistError || !allowlist || !allowlist.is_active) {
+      return { ok: false };
+    }
+
+    const { data: existingByUid, error: existingError } = await admin
+      .from("employee_accounts")
+      .select("*")
+      .eq("uid", uid)
+      .maybeSingle();
+
+    if (existingError) {
+      return { ok: false };
+    }
+
+    if (existingByUid && existingByUid.auth_user_id !== user.id) {
+      return { ok: false };
+    }
+
+    const payload = {
+      auth_user_id: user.id,
+      uid,
+      email: (user.email ?? "").toLowerCase(),
+      access_enabled: true,
+      email_confirmed: Boolean(user.email_confirmed_at),
+    };
+
+    const { data: account, error } = await admin
+      .from("employee_accounts")
+      .upsert(payload, {
+        onConflict: "auth_user_id",
+        ignoreDuplicates: false,
+      })
+      .select("*")
+      .single();
+
+    if (error || !account) {
+      return { ok: false };
+    }
+
+    return {
+      ok: true,
+      user,
+      account: account as EmployeeAccountRow,
+      allowlist: allowlist as AllowlistRow,
+    };
+  } catch (error) {
+    console.error("ensurePortalAccountFromUser failed:", error);
     return { ok: false };
   }
-
-  const admin = createAdminSupabase();
-
-  const { data: allowlist } = await admin
-    .from("employee_allowlist")
-    .select("*")
-    .eq("uid", uid)
-    .maybeSingle();
-
-  if (!allowlist || !allowlist.is_active) {
-    return { ok: false };
-  }
-
-  const { data: existingByUid } = await admin
-    .from("employee_accounts")
-    .select("*")
-    .eq("uid", uid)
-    .maybeSingle();
-
-  if (existingByUid && existingByUid.auth_user_id !== user.id) {
-    return { ok: false };
-  }
-
-  const payload = {
-    auth_user_id: user.id,
-    uid,
-    email: (user.email ?? "").toLowerCase(),
-    access_enabled: true,
-    email_confirmed: Boolean(user.email_confirmed_at),
-  };
-
-  const { data: account, error } = await admin
-    .from("employee_accounts")
-    .upsert(payload, {
-      onConflict: "auth_user_id",
-      ignoreDuplicates: false,
-    })
-    .select("*")
-    .single();
-
-  if (error || !account) {
-    return { ok: false };
-  }
-
-  return {
-    ok: true,
-    user,
-    account: account as EmployeeAccountRow,
-    allowlist: allowlist as AllowlistRow,
-  };
 }
 
 export async function getPortalAccess(): Promise<AccessResult> {
-  const supabase = await getServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const supabase = await getServerSupabase();
 
-  if (!user) {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (error || !user) {
+      return { ok: false };
+    }
+
+    const ensured = await ensurePortalAccountFromUser(user);
+
+    if (!ensured.ok || !ensured.account || !ensured.allowlist) {
+      return { ok: false };
+    }
+
+    if (!ensured.account.access_enabled || !ensured.allowlist.is_active) {
+      return { ok: false };
+    }
+
+    return ensured;
+  } catch (error) {
+    console.error("getPortalAccess failed:", error);
     return { ok: false };
   }
-
-  const ensured = await ensurePortalAccountFromUser(user);
-
-  if (!ensured.ok || !ensured.account || !ensured.allowlist) {
-    return { ok: false };
-  }
-
-  if (!ensured.account.access_enabled || !ensured.allowlist.is_active) {
-    return { ok: false };
-  }
-
-  return ensured;
 }
 
 export async function assertPortalAccess() {
