@@ -1,6 +1,9 @@
 import { assertPortalAccess } from "@/lib/auth-guards";
 import { ProfileCard } from "@/components/profile/ProfileCard";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export default async function ProfilePage() {
   const access = await assertPortalAccess();
 

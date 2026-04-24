@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
-import { getBrowserSupabase } from "@/lib/supabase/browser";
 
 declare global {
   interface Window {
@@ -96,7 +95,6 @@ export function RegisterForm() {
   const [password, setPassword] = useState("");
   const [turnstileToken, setTurnstileToken] = useState("");
   const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [turnstileLoadFailed, setTurnstileLoadFailed] = useState(false);
 
@@ -104,7 +102,6 @@ export function RegisterForm() {
     event.preventDefault();
     setBusy(true);
     setError("");
-    setSuccessMessage("");
 
     if (!turnstileToken) {
       setError("Капча не прошла проверку. Обновите страницу и попробуйте снова.");
@@ -112,7 +109,7 @@ export function RegisterForm() {
       return;
     }
 
-    const precheckResponse = await fetch("/api/auth/register/precheck", {
+    const response = await fetch("/api/auth/register", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -120,38 +117,19 @@ export function RegisterForm() {
       body: JSON.stringify({
         uid,
         email,
+        password,
         turnstileToken,
       }),
     });
 
-    const precheckPayload = await precheckResponse.json().catch(() => null);
+    const payload = await response.json().catch(() => null);
 
-    if (!precheckResponse.ok) {
-      setError(precheckPayload?.error ?? "Не удалось проверить логин и капчу.");
+    if (!response.ok) {
+      setError(payload?.error ?? "Не удалось зарегистрировать аккаунт.");
       setBusy(false);
       return;
     }
 
-    const supabase = getBrowserSupabase();
-
-    const { error } = await supabase.auth.signUp({
-      email: email.trim().toLowerCase(),
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/portal`,
-        data: {
-          uid: uid.trim().toLowerCase(),
-        },
-      },
-    });
-
-    if (error) {
-      setError(error.message || "Не удалось создать учетную запись.");
-      setBusy(false);
-      return;
-    }
-
-    setSuccessMessage("Аккаунт создан. Подтвердите почту через письмо и затем войдите.");
     router.push(`/confirm-email?email=${encodeURIComponent(email.trim().toLowerCase())}`);
     router.refresh();
   }
@@ -167,7 +145,6 @@ export function RegisterForm() {
       <p>Зарегистрироваться может только сотрудник, чей логин есть в белом списке.</p>
 
       {error ? <div className="status-box status-box--error">{error}</div> : null}
-      {successMessage ? <div className="status-box status-box--success">{successMessage}</div> : null}
 
       {turnstileLoadFailed ? (
         <div className="status-box status-box--error">

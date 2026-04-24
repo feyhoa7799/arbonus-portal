@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
-import { getBrowserSupabase } from "@/lib/supabase/browser";
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
@@ -16,19 +15,25 @@ export function ForgotPasswordForm() {
     setMessage("");
     setError("");
 
-    const supabase = getBrowserSupabase();
-
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+    const response = await fetch("/api/auth/password-reset", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+      }),
     });
 
-    if (error) {
-      setError("Не удалось отправить письмо для сброса пароля.");
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      setError(payload?.error ?? "Не удалось обработать запрос.");
       setBusy(false);
       return;
     }
 
-    setMessage("Письмо для сброса пароля отправлено.");
+    setMessage(payload?.message ?? "Если такой email существует, письмо будет отправлено.");
     setBusy(false);
   }
 

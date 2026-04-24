@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
-import { getBrowserSupabase } from "@/lib/supabase/browser";
 
 export function ConfirmEmailCard({ email }: { email: string }) {
   const [busy, setBusy] = useState(false);
@@ -15,23 +14,25 @@ export function ConfirmEmailCard({ email }: { email: string }) {
     setMessage("");
     setError("");
 
-    const supabase = getBrowserSupabase();
-
-    const { error } = await supabase.auth.resend({
-      type: "signup",
-      email: email.trim().toLowerCase(),
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/portal`,
+    const response = await fetch("/api/auth/confirm-email/resend", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
       },
+      body: JSON.stringify({
+        email,
+      }),
     });
 
-    if (error) {
-      setError("Не удалось отправить письмо повторно.");
+    const payload = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      setError(payload?.error ?? "Не удалось обработать запрос.");
       setBusy(false);
       return;
     }
 
-    setMessage("Письмо отправлено повторно.");
+    setMessage(payload?.message ?? "Если подтверждение возможно, письмо будет отправлено.");
     setBusy(false);
   }
 

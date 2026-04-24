@@ -4,11 +4,14 @@ import path from "node:path";
 import { promises as fs } from "node:fs";
 import { getPortalAccess } from "@/lib/auth-guards";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 type RouteProps = {
   params: Promise<{ asset: string[] }>;
 };
 
-const BASE_DIR = path.join(process.cwd(), "tilda-export");
+const BASE_DIR = path.join(/* turbopackIgnore: true */ process.cwd(), "tilda-export");
 
 function safeResolve(parts: string[]) {
   const resolved = path.resolve(BASE_DIR, ...parts);

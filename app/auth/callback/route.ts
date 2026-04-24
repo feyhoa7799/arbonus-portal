@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { ensurePortalAccountFromUser } from "@/lib/auth-guards";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
