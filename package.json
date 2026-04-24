@@ -9,12 +9,14 @@
     "import:allowlist": "tsx scripts/import-allowlist.ts",
     "import:allowlist:prod": "dotenv -e .env.prod-sync -- tsx scripts/import-allowlist.ts ./import/allowlist.xlsx",
     "seed:resources": "tsx scripts/seed-resources.ts",
-    "upload:resource": "tsx scripts/upload-resource-file.ts"
+    "upload:resource": "tsx scripts/upload-resource-file.ts",
+    "tilda:apply": "tsx scripts/apply-tilda-zip.ts"
   },
   "dependencies": {
     "@next/env": "^16.0.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.49.8",
+    "adm-zip": "^0.5.16",
     "mime-types": "^2.1.35",
     "next": "^16.2.4",
     "react": "^19.2.0",
@@ -23,6 +25,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.7",
     "@types/mime-types": "^2.1.4",
     "@types/node": "^22.15.21",
     "@types/react": "^19.2.2",
