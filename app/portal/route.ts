@@ -6,11 +6,7 @@ import { getClientIp, recordSecurityEvent } from "@/lib/security";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-type RouteProps = {
-  params: Promise<{ slug?: string[] }>;
-};
-
-export async function GET(request: NextRequest, { params }: RouteProps) {
+export async function GET(request: NextRequest) {
   const ipAddress = getClientIp(request.headers);
   const access = await getPortalAccess();
 
@@ -25,8 +21,7 @@ export async function GET(request: NextRequest, { params }: RouteProps) {
     return NextResponse.redirect(new URL("/login?blocked=1", request.url));
   }
 
-  const slugParts = (await params).slug ?? [];
-  const page = getPortalPageBySlug(slugParts);
+  const page = getPortalPageBySlug([]);
 
   if (!page) {
     await recordSecurityEvent({
@@ -37,7 +32,7 @@ export async function GET(request: NextRequest, { params }: RouteProps) {
       success: false,
       details: {
         reason: "page_not_found",
-        slugParts,
+        slugParts: [],
       },
     });
 
