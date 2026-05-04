@@ -104,11 +104,6 @@ export function ProfileCard({ email, uid, displayName, storeName }: Props) {
           </a>
         </div>
       </form>
-
-      <p className="page-note">
-        Если ваш UID исчезнет из очередной Excel-выгрузки, доступ в портал будет отключен автоматически
-        при следующем обновлении белого списка.
-      </p>
     </div>
   );
 }
