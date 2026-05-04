@@ -134,7 +134,7 @@ declare
   matched_nonce_id bigint;
 begin
   requested_uid := lower(trim(coalesce(event->'user'->'user_metadata'->>'uid', '')));
-  requested_nonce := trim(coalesce(event->'user'->'user_metadata'->>'reg_nonce', '')));
+  requested_nonce := trim(coalesce(event->'user'->'user_metadata'->>'reg_nonce', ''));
   requested_email := lower(trim(coalesce(event->'user'->>'email', '')));
 
   if requested_uid = '' or requested_nonce = '' or requested_email = '' then
