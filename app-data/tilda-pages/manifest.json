@@ -1,0 +1,15 @@
+{
+  "importedAt": "2026-05-04T12:21:47.297Z",
+  "sourceZip": "bonus-update.zip",
+  "entryPage": "page66963867.html",
+  "pages": [
+    "404.html",
+    "files/page66963867body.html",
+    "page66963867.html"
+  ],
+  "routeToPage": {
+    "/portal/404": "404.html",
+    "/portal/files/page66963867body": "files/page66963867body.html",
+    "/portal": "page66963867.html"
+  }
+}

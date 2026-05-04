@@ -16,7 +16,7 @@
     "@next/env": "^16.0.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.49.8",
-    "adm-zip": "^0.5.16",
+    "adm-zip": "^0.5.17",
     "mime-types": "^2.1.35",
     "next": "^16.2.4",
     "react": "^19.2.0",
@@ -25,7 +25,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/adm-zip": "^0.5.7",
+    "@types/adm-zip": "^0.5.8",
     "@types/mime-types": "^2.1.4",
     "@types/node": "^22.15.21",
     "@types/react": "^19.2.2",

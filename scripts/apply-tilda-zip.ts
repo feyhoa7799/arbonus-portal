@@ -12,8 +12,11 @@ type TildaManifest = {
 };
 
 const PROJECT_ROOT = process.cwd();
-const INCOMING_ARG = process.argv[2];
-const ENTRY_ARG = process.argv.find((arg) => arg.startsWith("--entry="))?.split("=")[1] ?? null;
+const incomingArgs = process.argv.slice(2);
+
+const INCOMING_ARG = incomingArgs.find((arg) => !arg.startsWith("--"));
+const ENTRY_ARG =
+  incomingArgs.find((arg) => arg.startsWith("--entry="))?.split("=")[1] ?? null;
 
 const TILDA_EXPORT_DIR = path.join(PROJECT_ROOT, "tilda-export");
 const TILDA_PAGES_DIR = path.join(PROJECT_ROOT, "app-data", "tilda-pages");
@@ -232,7 +235,10 @@ function rewriteHtmlContent(
     /\b(href|src|poster|action|data-original|data-img-zoom-url|data-content-cover-bg|content)=("([^"]*)"|'([^']*)')/gi,
     (full, attr, quotedValue, doubleQuotedValue, singleQuotedValue) => {
       const value = doubleQuotedValue ?? singleQuotedValue ?? "";
-      const rewritten = rewriteValue(value, attr.toLowerCase() === "content" || attr.toLowerCase() === "poster");
+      const rewritten = rewriteValue(
+        value,
+        attr.toLowerCase() === "content" || attr.toLowerCase() === "poster",
+      );
       const quote = quotedValue.startsWith('"') ? '"' : "'";
       return `${attr}=${quote}${rewritten}${quote}`;
     },
@@ -247,7 +253,11 @@ function rewriteHtmlContent(
   return output;
 }
 
-async function copyFilePreservingTree(sourceRoot: string, absoluteSource: string, targetRoot: string) {
+async function copyFilePreservingTree(
+  sourceRoot: string,
+  absoluteSource: string,
+  targetRoot: string,
+) {
   const relative = path.relative(sourceRoot, absoluteSource);
   const target = path.join(targetRoot, relative);
   await ensureDir(path.dirname(target));
@@ -286,7 +296,9 @@ async function backupCurrentVersion() {
 
 async function main() {
   if (!INCOMING_ARG) {
-    throw new Error("Укажите путь к ZIP архиву. Пример: npm run tilda:apply -- ./incoming-tilda/update.zip");
+    throw new Error(
+      "Укажите путь к ZIP архиву. Пример: npm run tilda:apply -- ./incoming-tilda/update.zip",
+    );
   }
 
   const zipPath = path.resolve(PROJECT_ROOT, INCOMING_ARG);

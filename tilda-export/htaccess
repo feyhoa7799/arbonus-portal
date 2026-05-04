@@ -6,6 +6,6 @@ DirectoryIndex page66963867.html
 RewriteEngine On
 
 RewriteCond %{REQUEST_FILENAME} /robots.txt
-RewriteCond "%{DOCUMENT_ROOT}/project12886373/robots_%{HTTP_HOST}.txt" -f
+RewriteCond "%{DOCUMENT_ROOT}/robots_%{HTTP_HOST}.txt" -f
 RewriteRule ^(.*)$ robots_%{HTTP_HOST}.txt [NC,L]
 
