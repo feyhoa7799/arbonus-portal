@@ -10,7 +10,13 @@ const PUBLIC_ROUTES = [
   "/auth/callback",
 ];
 
-const PUBLIC_API_ROUTES = ["/api/auth/register/precheck", "/api/health"];
+const PUBLIC_API_ROUTES = [
+  "/api/auth/register",
+  "/api/auth/register/precheck",
+  "/api/auth/password-reset",
+  "/api/auth/confirm-email/resend",
+  "/api/health",
+];
 
 const PUBLIC_PREFIXES = [
   "/_next",
