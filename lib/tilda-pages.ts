@@ -48,11 +48,25 @@ function preparePortalHtml(rawHtml: string) {
     );
 
   html = html.replace(
-    /(<img\b[^>]*\bdata-original=(['"])([^'"]+)\2[^>]*?)\s+src=(['"])[^'"]*__resize__20x__[^'"]*\4/gi,
+    /(<img\b[^>]*\bdata-original=(['"])([^'"]+)\2[^>]*?)\s+src=(['"])[^'"]*(?:__resize__20x__|blank\.gif)[^'"]*\4/gi,
     "$1 src=$2$3$2",
   );
 
-  const portalPatch = "";
+  const portalPatch = `
+<style id="arbonus-portal-patch">
+  .t-tildalabel,
+  .t-tildalabel-free,
+  .t-tildalabel__wrapper,
+  [class*="tildalabel"],
+  a[href*="tilda.cc"],
+  a[href*="tilda.ws"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+</style>
+<script src="/arbonus-portal-patch.js" defer></script>`;
 
   return html.includes("</body>") ? html.replace("</body>", `${portalPatch}</body>`) : `${html}${portalPatch}`;
 }
