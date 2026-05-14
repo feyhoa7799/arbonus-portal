@@ -37,6 +37,42 @@ function loadManifest() {
   return JSON.parse(raw) as TildaManifest;
 }
 
+function isTildaRelativeAsset(value: string) {
+  return /^(images|css|js|files)\//i.test(value);
+}
+
+function normalizeTildaAssetUrl(value: string) {
+  if (!value || value.startsWith("/") || value.startsWith("#")) {
+    return value;
+  }
+
+  if (/^(https?:|mailto:|tel:|data:|blob:|javascript:)/i.test(value)) {
+    return value;
+  }
+
+  return isTildaRelativeAsset(value) ? `/portal-assets/${value}` : value;
+}
+
+function rewriteTildaRelativeAssets(html: string) {
+  let output = html.replace(
+    /\b(href|src|poster|action|data-original|data-img-zoom-url|data-content-cover-bg|content)=("([^"]*)"|'([^']*)')/gi,
+    (_full, attr, quotedValue, doubleQuotedValue, singleQuotedValue) => {
+      const value = doubleQuotedValue ?? singleQuotedValue ?? "";
+      const rewritten = normalizeTildaAssetUrl(value);
+      const quote = quotedValue.startsWith('"') ? '"' : "'";
+      return `${attr}=${quote}${rewritten}${quote}`;
+    },
+  );
+
+  output = output.replace(/url\((['"]?)([^'")]+)\1\)/gi, (_full, quote, value) => {
+    const rewritten = normalizeTildaAssetUrl(value.trim());
+    const actualQuote = quote || "";
+    return `url(${actualQuote}${rewritten}${actualQuote})`;
+  });
+
+  return output;
+}
+
 function preparePortalHtml(rawHtml: string) {
   const siteUrl = getConfiguredSiteUrl();
 
@@ -46,6 +82,8 @@ function preparePortalHtml(rawHtml: string) {
       /<link\s+rel=["']shortcut icon["'][^>]*>/i,
       '<link rel="icon" href="/site-icon.svg" type="image/svg+xml"/>',
     );
+
+  html = rewriteTildaRelativeAssets(html);
 
   html = html.replace(
     /(<img\b[^>]*\bdata-original=(['"])([^'"]+)\2[^>]*?)\s+src=(['"])[^'"]*(?:__resize__20x__|blank\.gif)[^'"]*\4/gi,
