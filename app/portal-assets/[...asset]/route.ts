@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { lookup as lookupMimeType } from "mime-types";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import { getPortalAccess } from "@/lib/auth-guards";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -21,12 +20,7 @@ function safeResolve(parts: string[]) {
   return resolved;
 }
 
-export async function GET(request: NextRequest, { params }: RouteProps) {
-  const access = await getPortalAccess();
-  if (!access.ok) {
-    return NextResponse.redirect(new URL("/login?blocked=1", request.url));
-  }
-
+export async function GET(_request: NextRequest, { params }: RouteProps) {
   const { asset } = await params;
   const absolutePath = safeResolve(asset);
 
@@ -41,7 +35,7 @@ export async function GET(request: NextRequest, { params }: RouteProps) {
     return new Response(file, {
       headers: {
         "content-type": String(mimeType),
-        "cache-control": "private, max-age=3600",
+        "cache-control": "public, max-age=31536000, immutable",
       },
     });
   } catch {
