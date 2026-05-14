@@ -8,6 +8,8 @@ const PUBLIC_ROUTES = [
   "/forgot-password",
   "/reset-password",
   "/auth/callback",
+  "/arbonus-portal-patch.js",
+  "/site-icon.svg",
 ];
 
 const PUBLIC_API_ROUTES = [
@@ -112,5 +114,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|portal-assets).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|site-icon.svg|arbonus-portal-patch.js|portal-assets).*)",
+  ],
 };
