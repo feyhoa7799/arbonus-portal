@@ -32,6 +32,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 COPY --from=builder /app/tilda-export ./tilda-export
 COPY --from=builder /app/app-data ./app-data
 COPY --from=builder /app/scripts ./scripts
