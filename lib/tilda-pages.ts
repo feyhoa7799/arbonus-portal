@@ -37,15 +37,112 @@ function loadManifest() {
   return JSON.parse(raw) as TildaManifest;
 }
 
+function preparePortalHtml(rawHtml: string) {
+  const siteUrl = getConfiguredSiteUrl();
+
+  let html = rawHtml
+    .replaceAll("__SITE_URL__", siteUrl)
+    .replace(
+      /<link\s+rel=["']shortcut icon["'][^>]*>/i,
+      '<link rel="icon" href="/site-icon.svg" type="image/svg+xml"/>',
+    );
+
+  html = html.replace(
+    /(<img\b[^>]*\bdata-original=(['"])([^'"]+)\2[^>]*?)\s+src=(['"])[^'"]*__resize__20x__[^'"]*\4/gi,
+    "$1 src=$2$3$2",
+  );
+
+  const portalPatch = String.raw`
+<style id="arbonus-portal-patch">
+  .t-tildalabel,
+  .t-tildalabel-free,
+  a[href*="tilda.cc"],
+  a[href*="tilda.ws"] {
+    display: none !important;
+    visibility: hidden !important;
+  }
+</style>
+<script id="arbonus-portal-patch-script">
+(function () {
+  function normalizeImages() {
+    document.querySelectorAll('img[data-original]').forEach(function (img) {
+      var original = img.getAttribute('data-original');
+      var current = img.getAttribute('src') || '';
+      if (!original) return;
+      if (!current || current.indexOf('__resize__20x__') !== -1 || current.indexOf('blank.gif') !== -1) {
+        img.setAttribute('src', original);
+      }
+    });
+
+    document.querySelectorAll('[data-content-cover-bg], [data-original]').forEach(function (node) {
+      var bg = node.getAttribute('data-content-cover-bg') || node.getAttribute('data-original');
+      var style = node.getAttribute('style') || '';
+      if (bg && style.indexOf('__resize__20x__') !== -1) {
+        node.setAttribute('style', style.replace(/url\((['"]?)[^)]*__resize__20x__([^)]*)\)/g, 'url(' + bg + ')'));
+      }
+    });
+  }
+
+  function removeTildaLabel() {
+    document.querySelectorAll('.t-tildalabel, .t-tildalabel-free, a[href*="tilda.cc"], a[href*="tilda.ws"]').forEach(function (node) {
+      node.remove();
+    });
+  }
+
+  function isEdusonBlock(node) {
+    var current = node;
+    while (current && current !== document.body) {
+      var text = (current.textContent || '').toLowerCase();
+      if (text.indexOf('eduson') !== -1 || text.indexOf('библиотека курсов') !== -1) {
+        return true;
+      }
+      current = current.parentElement;
+    }
+    return false;
+  }
+
+  document.addEventListener('click', function (event) {
+    var target = event.target;
+    if (!(target instanceof Element)) return;
+
+    var action = target.closest('a, button, .tn-atom');
+    if (!action || !isEdusonBlock(action)) return;
+
+    var text = (action.textContent || '').toLowerCase();
+    var href = action.getAttribute('href') || '';
+    var looksLikeEdusonAction =
+      text.indexOf('получить доступ') !== -1 ||
+      text.indexOf('перейти на сайт') !== -1 ||
+      href.indexOf('eduson') !== -1;
+
+    if (!looksLikeEdusonAction) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    alert('Пока не доступно, ведутся работы.');
+  }, true);
+
+  normalizeImages();
+  removeTildaLabel();
+  document.addEventListener('DOMContentLoaded', function () {
+    normalizeImages();
+    removeTildaLabel();
+    setTimeout(normalizeImages, 300);
+    setTimeout(removeTildaLabel, 300);
+    setTimeout(normalizeImages, 1000);
+  });
+})();
+</script>`;
+
+  return html.includes("</body>") ? html.replace("</body>", `${portalPatch}</body>`) : `${html}${portalPatch}`;
+}
+
 function loadLegacyPortal() {
   if (!existsSync(LEGACY_PORTAL_HTML_PATH)) {
     return null;
   }
 
-  const html = readFileSync(LEGACY_PORTAL_HTML_PATH, "utf-8").replaceAll(
-    "__SITE_URL__",
-    getConfiguredSiteUrl(),
-  );
+  const html = preparePortalHtml(readFileSync(LEGACY_PORTAL_HTML_PATH, "utf-8"));
 
   return {
     html,
@@ -75,10 +172,7 @@ export function getPortalPageBySlug(slugParts?: string[]) {
   }
 
   const absoluteHtmlPath = path.join(TILDA_PAGES_DIR, relativeHtmlPath);
-  const html = readFileSync(absoluteHtmlPath, "utf-8").replaceAll(
-    "__SITE_URL__",
-    getConfiguredSiteUrl(),
-  );
+  const html = preparePortalHtml(readFileSync(absoluteHtmlPath, "utf-8"));
 
   return {
     html,
