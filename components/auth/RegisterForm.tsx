@@ -154,7 +154,7 @@ export function RegisterForm() {
 
       <form className="form-grid" onSubmit={onSubmit}>
         <div className="field">
-          <label htmlFor="uid">Имя пользователя</label>
+          <label htmlFor="uid">Логин GEM</label>
           <input
             id="uid"
             type="text"
