@@ -57,13 +57,11 @@ function arbonusPortalPatch() {
 }
 
 function arbonusIsEdusonAction(node) {
-  var current = node;
-  while (current && current !== document.body) {
-    var text = (current.textContent || '').toLowerCase();
-    if (text.indexOf('eduson') !== -1 || text.indexOf('библиотека курсов') !== -1) return true;
-    current = current.parentElement;
-  }
-  return false;
+  var record = node.closest('.r.t-rec');
+  if (!record) return false;
+
+  var recordText = (record.textContent || '').toLowerCase();
+  return recordText.indexOf('eduson') !== -1 || recordText.indexOf('библиотека курсов eduson') !== -1;
 }
 
 if (!window.__arbonusEdusonPatchInstalled) {
