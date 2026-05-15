@@ -56,29 +56,33 @@ function arbonusPortalPatch() {
   });
 }
 
-function arbonusFindEdusonMarker(record) {
-  var elements = record.querySelectorAll('.tn-atom, h1, h2, h3, div, span');
-  for (var index = 0; index < elements.length; index += 1) {
-    var text = (elements[index].textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
-    if (text.indexOf('eduson') !== -1) {
-      return elements[index];
+function arbonusFindEdusonMarker() {
+  var atoms = document.querySelectorAll('.tn-atom');
+  var best = null;
+
+  atoms.forEach(function (atom) {
+    var text = (atom.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+    if (!text || text.length > 120) return;
+    if (text === 'eduson' || text.indexOf('библиотека курсов eduson') !== -1 || text.indexOf('eduson') !== -1) {
+      var rect = atom.getBoundingClientRect();
+      if (!best || rect.top < best.getBoundingClientRect().top) {
+        best = atom;
+      }
     }
-  }
-  return null;
+  });
+
+  return best;
 }
 
 function arbonusIsEdusonAction(node) {
-  var record = node.closest('.r.t-rec');
-  if (!record) return false;
-
-  var marker = arbonusFindEdusonMarker(record);
+  var marker = arbonusFindEdusonMarker();
   if (!marker) return false;
 
   var actionRect = node.getBoundingClientRect();
   var markerRect = marker.getBoundingClientRect();
-  var maxDistance = Math.max(650, window.innerHeight * 0.9);
+  var distanceFromMarker = actionRect.top - markerRect.top;
 
-  return actionRect.top >= markerRect.top - 60 && actionRect.top <= markerRect.top + maxDistance;
+  return distanceFromMarker >= -80 && distanceFromMarker <= 520;
 }
 
 if (!window.__arbonusEdusonPatchInstalled) {
