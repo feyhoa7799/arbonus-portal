@@ -56,12 +56,29 @@ function arbonusPortalPatch() {
   });
 }
 
+function arbonusFindEdusonMarker(record) {
+  var elements = record.querySelectorAll('.tn-atom, h1, h2, h3, div, span');
+  for (var index = 0; index < elements.length; index += 1) {
+    var text = (elements[index].textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+    if (text.indexOf('eduson') !== -1) {
+      return elements[index];
+    }
+  }
+  return null;
+}
+
 function arbonusIsEdusonAction(node) {
   var record = node.closest('.r.t-rec');
   if (!record) return false;
 
-  var recordText = (record.textContent || '').toLowerCase();
-  return recordText.indexOf('eduson') !== -1 || recordText.indexOf('библиотека курсов eduson') !== -1;
+  var marker = arbonusFindEdusonMarker(record);
+  if (!marker) return false;
+
+  var actionRect = node.getBoundingClientRect();
+  var markerRect = marker.getBoundingClientRect();
+  var maxDistance = Math.max(650, window.innerHeight * 0.9);
+
+  return actionRect.top >= markerRect.top - 60 && actionRect.top <= markerRect.top + maxDistance;
 }
 
 if (!window.__arbonusEdusonPatchInstalled) {
